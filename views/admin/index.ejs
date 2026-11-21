@@ -1,0 +1,51 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <h2 class="fw-bold mb-0">จัดการเมนูไข่ (Admin)</h2>
+  <div class="d-flex gap-2">
+    <a href="/admin/products/new" class="btn btn-success fw-bold">+ เพิ่มเมนูใหม่</a>
+    <a href="/admin/orders" class="btn btn-primary">ดูคำสั่งซื้อลูกค้า</a>
+    <form method="post" action="/admin/logout">
+      <button class="btn btn-outline-danger">ออกจากระบบ</button>
+    </form>
+  </div>
+</div>
+
+<form method="get" action="/admin" class="d-flex gap-2 mb-3" style="max-width: 450px;">
+  <input type="text" name="q" value="<%= q %>" class="form-control" placeholder="ค้นหาชื่อเมนูหรือหมวดหมู่...">
+  <button class="btn btn-dark">ค้นหา</button>
+</form>
+
+<div class="table-responsive bg-white rounded shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-dark">
+      <tr>
+        <th>รูปภาพ</th>
+        <th>ชื่อเมนู</th>
+        <th>หมวดหมู่</th>
+        <th>ราคา</th>
+        <th>คงเหลือ</th>
+        <th>จัดการ</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% products.forEach(p => { %>
+        <tr>
+          <td><img src="<%= p.imageUrl %>" width="65" height="45" class="rounded object-fit-cover"></td>
+          <td class="fw-bold"><%= p.name %></td>
+          <td><span class="badge bg-secondary"><%= p.category %></span></td>
+          <td>฿<%= p.price %></td>
+          <td><%= p.stock %> จาน</td>
+          <td>
+            <a href="/admin/products/<%= p._id %>/edit" class="btn btn-warning btn-sm">แก้ไข</a>
+            <form method="post" action="/admin/products/<%= p._id %>/delete" class="d-inline" onsubmit="return confirm('ยืนยันการลบเมนูนี้?')">
+              <button class="btn btn-danger btn-sm">ลบ</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

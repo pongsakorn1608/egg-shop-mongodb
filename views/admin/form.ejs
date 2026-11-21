@@ -1,0 +1,50 @@
+<%- include('../partials/header') %>
+
+<div class="card shadow-sm border-0 p-4 mx-auto" style="max-width: 550px;">
+  <h3 class="fw-bold mb-3"><%= product && product._id ? 'แก้ไขข้อมูลเมนูไข่' : 'เพิ่มเมนูไข่ใหม่' %></h3>
+  <% if (error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+  <% } %>
+
+  <form method="post" action="<%= product && product._id ? '/admin/products/' + product._id + '/edit' : '/admin/products' %>">
+    <div class="mb-3">
+      <label class="form-label">ชื่อเมนู</label>
+      <input type="text" name="name" class="form-control" value="<%= product?.name || '' %>" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">หมวดหมู่ (เลือกหรือพิมพ์เพิ่มใหม่ได้)</label>
+      <input list="catList" name="category" class="form-control" value="<%= product?.category || 'ข้าวไข่ข้น' %>" required>
+      <datalist id="catList">
+        <option value="ข้าวไข่ข้น">
+        <option value="ข้าวไข่เจียว">
+        <option value="ข้าวไข่ดาวและไข่ต้ม">
+        <option value="ข้าวหน้าไข่สไตล์ญี่ปุ่น">
+        <option value="เมนูไข่ทานเล่น">
+      </datalist>
+    </div>
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label">ราคา (บาท)</label>
+        <input type="number" name="price" min="0" step="1" class="form-control" value="<%= product?.price ?? '' %>" required>
+      </div>
+      <div class="col-6">
+        <label class="form-label">จำนวนคงเหลือ (จาน)</label>
+        <input type="number" name="stock" min="0" step="1" class="form-control" value="<%= product?.stock ?? 20 %>" required>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">ลิงก์รูปภาพ (URL)</label>
+      <input type="text" name="imageUrl" class="form-control" value="<%= product?.imageUrl || '' %>" placeholder="https://...">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">รายละเอียดเมนู</label>
+      <textarea name="description" rows="3" class="form-control"><%= product?.description || '' %></textarea>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-success fw-bold flex-grow-1">บันทึกข้อมูลลง MongoDB</button>
+      <a href="/admin" class="btn btn-outline-secondary">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>

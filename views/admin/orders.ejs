@@ -1,0 +1,31 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-bold mb-0">รายการคำสั่งซื้อลูกค้า</h2>
+  <a href="/admin" class="btn btn-outline-dark">&larr; กลับหน้าจัดการสินค้า</a>
+</div>
+
+<% orders.forEach(o => { %>
+  <div class="card shadow-sm border-0 mb-3 p-3">
+    <div class="d-flex justify-content-between flex-wrap">
+      <strong>Order ID: <code><%= o._id %></code></strong>
+      <span class="badge bg-info text-dark"><%= o.status %></span>
+    </div>
+    <p class="mb-2 mt-1">ลูกค้า: <strong><%= o.customerName %></strong> | โทร: <%= o.phone %> | รับที่: <%= o.address %></p>
+    <ul class="mb-2">
+      <% o.items.forEach(i => { %>
+        <li><%= i.name %> จำนวน <%= i.quantity %> จาน (จานละ ฿<%= i.unitPrice %>)</li>
+      <% }) %>
+    </ul>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <strong class="text-danger">ยอดรวม: ฿<%= o.total.toLocaleString('th-TH') %></strong>
+      <a href="/admin/orders/<%= o._id %>/edit" class="btn btn-warning btn-sm">แก้ไขคำสั่งซื้อ</a>
+    </div>
+  </div>
+<% }) %>
+
+<% if (!orders.length) { %>
+  <div class="alert alert-secondary">ยังไม่มีคำสั่งซื้อเข้ามาในระบบ</div>
+<% } %>
+
+<%- include('../partials/footer') %>

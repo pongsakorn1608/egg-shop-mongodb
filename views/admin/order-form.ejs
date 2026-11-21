@@ -1,0 +1,106 @@
+<%- include('../partials/header') %>
+
+<div class="card shadow-sm border-0 p-4 mx-auto" style="max-width: 760px;">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="fw-bold mb-0">แก้ไขคำสั่งซื้อ</h2>
+    <a href="/admin/orders" class="btn btn-outline-secondary">กลับรายการคำสั่งซื้อ</a>
+  </div>
+
+  <p class="text-muted">Order ID: <code><%= order._id %></code></p>
+  <% if (error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+  <% } %>
+
+  <form method="post" action="/admin/orders/<%= order._id %>/edit">
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <label class="form-label" for="customerName">ชื่อลูกค้า</label>
+        <input id="customerName" type="text" name="customerName" class="form-control" value="<%= form.customerName %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="phone">เบอร์โทร</label>
+        <input id="phone" type="text" name="phone" class="form-control" value="<%= form.phone %>" required>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="address">ที่อยู่/วิธีรับสินค้า</label>
+        <input id="address" type="text" name="address" class="form-control" value="<%= form.address %>">
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="fw-bold mb-0">รายการเมนู</h5>
+      <button type="button" id="addOrderItem" class="btn btn-outline-primary btn-sm">+ เพิ่มเมนู</button>
+    </div>
+    <p class="small text-muted">รายการเดิมคงราคาตอนสั่งซื้อ ส่วนเมนูที่เพิ่มใหม่ใช้ราคาปัจจุบัน ระบบจะคำนวณยอดรวมและปรับสต็อกให้อัตโนมัติ</p>
+
+    <div id="orderItems">
+      <% form.items.forEach(item => { %>
+        <% const selectedId = String(item.product || ''); %>
+        <% const productExists = products.some(product => String(product._id) === selectedId); %>
+        <div class="row g-2 align-items-center mb-2 order-item">
+          <div class="col-md-8">
+            <label class="visually-hidden">เมนู</label>
+            <select name="productIds" class="form-select">
+              <option value="">เลือกเมนู</option>
+              <% products.forEach(product => { %>
+                <option value="<%= product._id %>" <%= selectedId === String(product._id) ? 'selected' : '' %>>
+                  <%= product.name %> — ฿<%= product.price %>
+                </option>
+              <% }) %>
+              <% if (selectedId && !productExists) { %>
+                <option value="<%= selectedId %>" selected>เมนูเดิมไม่พบในระบบ: <%= item.name || selectedId %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="visually-hidden">จำนวน</label>
+            <input type="number" name="quantities" min="1" step="1" class="form-control" value="<%= item.quantity %>" required>
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="btn btn-outline-danger w-100 removeOrderItem">นำออก</button>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <template id="orderItemTemplate">
+      <div class="row g-2 align-items-center mb-2 order-item">
+        <div class="col-md-8">
+          <label class="visually-hidden">เมนู</label>
+          <select name="productIds" class="form-select">
+            <option value="">เลือกเมนู</option>
+            <% products.forEach(product => { %>
+              <option value="<%= product._id %>"><%= product.name %> — ฿<%= product.price %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="visually-hidden">จำนวน</label>
+          <input type="number" name="quantities" min="1" step="1" class="form-control" value="1" required>
+        </div>
+        <div class="col-md-2">
+          <button type="button" class="btn btn-outline-danger w-100 removeOrderItem">นำออก</button>
+        </div>
+      </div>
+    </template>
+
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-success fw-bold flex-grow-1">บันทึกคำสั่งซื้อ</button>
+      <a href="/admin/orders" class="btn btn-outline-secondary">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  const orderItems = document.getElementById('orderItems');
+  document.getElementById('addOrderItem').addEventListener('click', () => {
+    orderItems.appendChild(document.getElementById('orderItemTemplate').content.cloneNode(true));
+  });
+  orderItems.addEventListener('click', event => {
+    if (event.target.closest('.removeOrderItem')) {
+      event.target.closest('.order-item').remove();
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

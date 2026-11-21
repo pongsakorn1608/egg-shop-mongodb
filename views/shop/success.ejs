@@ -1,0 +1,11 @@
+<%- include('../partials/header') %>
+
+<div class="card shadow-sm border-0 p-5 text-center mx-auto" style="max-width: 550px;">
+  <h2 class="text-success fw-bold mb-3">บันทึกคำสั่งซื้อสำเร็จ!</h2>
+  <p class="text-muted">เลขที่ออเดอร์ใน MongoDB: <code><%= order._id %></code></p>
+  <p class="mb-1">ผู้สั่ง: <strong><%= order.customerName %></strong> (<%= order.phone %>)</p>
+  <p class="fs-4 fw-bold text-danger my-3">ยอดชำระทั้งหมด: ฿<%= order.total.toLocaleString('th-TH') %></p>
+  <a href="/" class="btn btn-warning fw-bold mt-2">กลับไปเลือกเมนูเพิ่มเติม</a>
+</div>
+
+<%- include('../partials/footer') %>
