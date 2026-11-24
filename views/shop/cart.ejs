@@ -27,7 +27,7 @@
             </td>
             <td>฿<%= i.product.price.toLocaleString('th-TH') %></td>
             <td>
-              <form method="post" action="/cart/update/<%= i.product._id %>" class="d-flex align-items-center gap-1">
+              <form method="post" action="/cart/update/<%= i.product._id %>" class="d-flex align-items-center gap-1" novalidate>
                 <button type="submit" name="change" value="decrease" class="btn btn-outline-secondary btn-sm" aria-label="ลดจำนวน" <%= i.quantity <= 1 ? 'disabled' : '' %>>−</button>
                 <input type="number" name="qty" value="<%= i.quantity %>" min="1" max="<%= i.product.stock %>" class="form-control form-control-sm text-center cart-quantity" style="width: 76px;" aria-label="จำนวนจาน" required>
                 <button type="submit" name="change" value="increase" class="btn btn-outline-secondary btn-sm" aria-label="เพิ่มจำนวน" <%= i.quantity >= i.product.stock ? 'disabled' : '' %>>+</button>

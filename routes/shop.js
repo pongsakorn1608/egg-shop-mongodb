@@ -99,15 +99,17 @@ router.post('/cart/update/:id', async (req, res) => {
 
   const cart = req.session.cart || {};
   const currentQty = Number(cart[product.id]) || 0;
+  const quantityText = String(req.body.qty || '');
+  const enteredQuantity = /^[1-9]\d*$/.test(quantityText) ? Number(quantityText) : NaN;
+  const baseQuantity = Number.isSafeInteger(enteredQuantity) ? enteredQuantity : currentQty;
   let quantity;
 
   if (req.body.change === 'increase') {
-    quantity = currentQty + 1;
+    quantity = baseQuantity + 1;
   } else if (req.body.change === 'decrease') {
-    quantity = currentQty - 1;
+    quantity = baseQuantity - 1;
   } else {
-    const quantityText = String(req.body.qty || '');
-    quantity = /^[1-9]\d*$/.test(quantityText) ? Number(quantityText) : NaN;
+    quantity = enteredQuantity;
   }
 
   if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > product.stock) {
