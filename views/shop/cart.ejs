@@ -62,7 +62,7 @@
         <label class="form-label">สถานที่รับอาหาร</label>
         <input type="text" name="address" class="form-control" value="รับหน้าร้าน / โต๊ะอาหาร">
       </div>
-      <button type="submit" class="btn btn-success fw-bold w-100">ยืนยันการสั่งซื้อ</button>
+      <button type="submit" class="btn btn-success fw-bold w-100" <%= stockIssues.length ? 'disabled' : '' %>>ยืนยันการสั่งซื้อ</button>
     </form>
   </div>
 <% } else { %>

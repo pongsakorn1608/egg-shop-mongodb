@@ -43,10 +43,11 @@ router.post('/cart/add/:id', async (req, res) => {
   const cart = req.session.cart || {};
   const currentQty = Math.min(Number(cart[product.id]) || 0, product.stock);
   if (currentQty + qty > product.stock) {
-    const { items, total } = await getCartData(cart);
+    const { items, total, stockIssues } = await getCartData(cart);
     return res.status(400).render('shop/cart', {
       items,
       total,
+      stockIssues,
       error: `เพิ่มไม่ได้ เนื่องจากมีสินค้าในสต๊อก ${product.stock} จาน และในตะกร้ามีแล้ว ${currentQty} จาน (เพิ่มได้อีก ${product.stock - currentQty} จาน)`
     });
   }
@@ -61,17 +62,33 @@ router.post('/cart/add/:id', async (req, res) => {
 async function getCartData(cart) {
   const ids = Object.keys(cart).filter(id => mongoose.isValidObjectId(id));
   const products = await Product.find({ _id: { $in: ids } });
+  const stockIssues = products
+    .map(product => ({
+      name: product.name,
+      requestedQuantity: Number(cart[product.id]) || 0,
+      stock: product.stock
+    }))
+    .filter(item => item.requestedQuantity > item.stock);
   const items = products
     .map(p => ({ product: p, quantity: Math.min(cart[p.id], p.stock) }))
     .filter(i => i.quantity > 0);
   const total = items.reduce((sum, i) => sum + i.quantity * i.product.price, 0);
-  return { items, total };
+  return { items, total, stockIssues };
+}
+
+function getStockError(stockIssues) {
+  if (!stockIssues.length) return null;
+
+  const details = stockIssues
+    .map(item => `${item.name}: ในตะกร้า ${item.requestedQuantity} จาน แต่สต๊อกเหลือ ${item.stock} จาน`)
+    .join(', ');
+  return `สต๊อกสินค้าไม่เพียงพอ (${details}) กรุณาปรับจำนวนและกดบันทึกก่อนสั่งซื้อ`;
 }
 
 // 4. หน้าตะกร้าสินค้า
 router.get('/cart', async (req, res) => {
-  const { items, total } = await getCartData(req.session.cart || {});
-  res.render('shop/cart', { items, total, error: null });
+  const { items, total, stockIssues } = await getCartData(req.session.cart || {});
+  res.render('shop/cart', { items, total, stockIssues, error: getStockError(stockIssues) });
 });
 
 // 5. ปรับจำนวนสินค้าในตะกร้า
@@ -94,10 +111,11 @@ router.post('/cart/update/:id', async (req, res) => {
   }
 
   if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > product.stock) {
-    const { items, total } = await getCartData(cart);
+    const { items, total, stockIssues } = await getCartData(cart);
     return res.status(400).render('shop/cart', {
       items,
       total,
+      stockIssues,
       error: `กรุณาระบุจำนวนตั้งแต่ 1 ถึง ${product.stock} จาน`
     });
   }
@@ -118,10 +136,24 @@ router.post('/checkout', async (req, res) => {
   const customerName = String(req.body.customerName || '').trim();
   const phone = String(req.body.phone || '').trim();
   const address = String(req.body.address || 'รับที่ร้าน').trim();
-  const { items, total } = await getCartData(req.session.cart || {});
+  const { items, total, stockIssues } = await getCartData(req.session.cart || {});
+
+  if (stockIssues.length) {
+    return res.status(409).render('shop/cart', {
+      items,
+      total,
+      stockIssues,
+      error: getStockError(stockIssues)
+    });
+  }
 
   if (!customerName || !phone || items.length === 0) {
-    return res.status(400).render('shop/cart', { items, total, error: 'กรุณากรอกชื่อและเบอร์โทรให้ครบถ้วน' });
+    return res.status(400).render('shop/cart', {
+      items,
+      total,
+      stockIssues,
+      error: 'กรุณากรอกชื่อและเบอร์โทรให้ครบถ้วน'
+    });
   }
 
   // ตัดจำนวนสต็อกสินค้าในคอลเลกชัน products
