@@ -41,7 +41,17 @@ router.post('/cart/add/:id', async (req, res) => {
 
   const qty = Math.max(1, parseInt(req.body.qty) || 1);
   const cart = req.session.cart || {};
-  cart[product.id] = Math.min((cart[product.id] || 0) + qty, product.stock);
+  const currentQty = Math.min(Number(cart[product.id]) || 0, product.stock);
+  if (currentQty + qty > product.stock) {
+    const { items, total } = await getCartData(cart);
+    return res.status(400).render('shop/cart', {
+      items,
+      total,
+      error: `เพิ่มไม่ได้ เนื่องจากมีสินค้าในสต๊อก ${product.stock} จาน และในตะกร้ามีแล้ว ${currentQty} จาน (เพิ่มได้อีก ${product.stock - currentQty} จาน)`
+    });
+  }
+
+  cart[product.id] = currentQty + qty;
   req.session.cart = cart;
 
   res.redirect('/cart');

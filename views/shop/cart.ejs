@@ -21,7 +21,10 @@
       <tbody>
         <% items.forEach(i => { %>
           <tr>
-            <td class="fw-bold"><%= i.product.name %></td>
+            <td class="fw-bold">
+              <%= i.product.name %>
+              <div class="small text-muted fw-normal mt-1">สต๊อกคงเหลือ: <%= i.product.stock %> จาน (เพิ่มได้อีก <%= Math.max(0, i.product.stock - i.quantity) %> จาน)</div>
+            </td>
             <td>฿<%= i.product.price.toLocaleString('th-TH') %></td>
             <td>
               <form method="post" action="/cart/update/<%= i.product._id %>" class="d-flex align-items-center gap-1">
