@@ -11,7 +11,7 @@
     <input type="text" name="q" value="<%= q %>" class="form-control" placeholder="ค้นหาชื่อเมนูไข่ เช่น ปู, กุ้ง, เบคอน...">
   </div>
   <div class="col-md-4">
-    <select name="category" class="form-select">
+    <select id="categoryFilter" name="category" class="form-select">
       <option value="">-- ทุกหมวดหมู่เมนู --</option>
       <% categories.forEach(cat => { %>
         <option value="<%= cat %>" <%= category === cat ? 'selected' : '' %>><%= cat %></option>
@@ -23,6 +23,19 @@
     <a href="/" class="btn btn-outline-secondary">ล้างค่า</a>
   </div>
 </form>
+
+<script>
+  document.getElementById('categoryFilter').addEventListener('change', function () {
+    const url = new URL(window.location.href);
+    url.search = '';
+
+    if (this.value) {
+      url.searchParams.set('category', this.value);
+    }
+
+    window.location.href = url.toString();
+  });
+</script>
 
 <p class="text-muted mb-3">พบเมนูทั้งหมด <strong><%= products.length %></strong> รายการ</p>
 
