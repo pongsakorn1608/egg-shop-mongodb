@@ -29,10 +29,11 @@
             <td>
               <form method="post" action="/cart/update/<%= i.product._id %>" class="d-flex align-items-center gap-1">
                 <button type="submit" name="change" value="decrease" class="btn btn-outline-secondary btn-sm" aria-label="ลดจำนวน" <%= i.quantity <= 1 ? 'disabled' : '' %>>−</button>
-                <input type="number" name="qty" value="<%= i.quantity %>" min="1" max="<%= i.product.stock %>" class="form-control form-control-sm text-center" style="width: 76px;" aria-label="จำนวนจาน" required>
+                <input type="number" name="qty" value="<%= i.quantity %>" min="1" max="<%= i.product.stock %>" class="form-control form-control-sm text-center cart-quantity" style="width: 76px;" aria-label="จำนวนจาน" required>
                 <button type="submit" name="change" value="increase" class="btn btn-outline-secondary btn-sm" aria-label="เพิ่มจำนวน" <%= i.quantity >= i.product.stock ? 'disabled' : '' %>>+</button>
                 <button type="submit" name="change" value="set" class="btn btn-outline-primary btn-sm">บันทึก</button>
               </form>
+              <div class="small text-danger mt-1 cart-quantity-error" aria-live="polite"></div>
             </td>
             <td class="text-danger fw-bold">฿<%= (i.product.price * i.quantity).toLocaleString('th-TH') %></td>
             <td>
@@ -49,7 +50,7 @@
   <div class="card shadow-sm border-0 p-4" style="max-width: 540px;">
     <h4 class="fw-bold mb-3">ยอดรวมทั้งหมด: <span class="text-danger">฿<%= total.toLocaleString('th-TH') %></span></h4>
     <p class="text-muted small">* กรุณากรอกข้อมูลสมมติสำหรับการทดสอบระบบ (PDPA)</p>
-    <form method="post" action="/checkout">
+    <form id="checkoutForm" method="post" action="/checkout">
       <div class="mb-3">
         <label class="form-label">ชื่อผู้สั่งซื้อ (สมมติ)</label>
         <input type="text" name="customerName" class="form-control" placeholder="เช่น นายสมชาย ใจดี" required>
@@ -62,7 +63,7 @@
         <label class="form-label">สถานที่รับอาหาร</label>
         <input type="text" name="address" class="form-control" value="รับหน้าร้าน / โต๊ะอาหาร">
       </div>
-      <button type="submit" class="btn btn-success fw-bold w-100" <%= stockIssues.length ? 'disabled' : '' %>>ยืนยันการสั่งซื้อ</button>
+      <button id="checkoutButton" type="submit" class="btn btn-success fw-bold w-100" <%= stockIssues.length ? 'disabled' : '' %>>ยืนยันการสั่งซื้อ</button>
     </form>
   </div>
 <% } else { %>
@@ -71,5 +72,52 @@
     <a href="/" class="btn btn-warning fw-bold">เลือกดูเมนูไข่</a>
   </div>
 <% } %>
+
+<script>
+  const quantityInputs = document.querySelectorAll('.cart-quantity');
+  const checkoutForm = document.getElementById('checkoutForm');
+  const checkoutButton = document.getElementById('checkoutButton');
+  const hasServerStockIssues = <%= stockIssues.length > 0 ? 'true' : 'false' %>;
+
+  function validateCartQuantities() {
+    let isValid = true;
+
+    quantityInputs.forEach(input => {
+      const quantity = Number(input.value);
+      const stock = Number(input.max);
+      let message = '';
+
+      if (!Number.isInteger(quantity) || quantity < 1) {
+        message = 'กรุณาระบุจำนวนอย่างน้อย 1 จาน';
+      } else if (quantity > stock) {
+        message = `จำนวนเกินสต๊อก มีเหลือ ${stock} จาน`;
+      }
+
+      input.setCustomValidity(message);
+      input.closest('td').querySelector('.cart-quantity-error').textContent = message;
+      if (message) isValid = false;
+    });
+
+    if (checkoutButton) checkoutButton.disabled = !isValid || hasServerStockIssues;
+    return isValid;
+  }
+
+  quantityInputs.forEach(input => {
+    input.addEventListener('input', validateCartQuantities);
+    input.addEventListener('change', validateCartQuantities);
+  });
+
+  if (checkoutForm) {
+    checkoutForm.addEventListener('submit', event => {
+      if (!validateCartQuantities()) {
+        event.preventDefault();
+        const invalidInput = Array.from(quantityInputs).find(input => !input.checkValidity());
+        if (invalidInput) invalidInput.reportValidity();
+      }
+    });
+  }
+
+  validateCartQuantities();
+</script>
 
 <%- include('../partials/footer') %>
