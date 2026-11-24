@@ -25,12 +25,22 @@
 </form>
 
 <script>
-  document.getElementById('categoryFilter').addEventListener('change', function () {
-    const url = new URL(window.location.href);
-    url.search = '';
+  const categoryFilter = document.getElementById('categoryFilter');
+  const nameFilter = document.querySelector('input[name="q"]');
 
-    if (this.value) {
-      url.searchParams.set('category', this.value);
+  categoryFilter.addEventListener('change', function () {
+    const url = new URL(window.location.href);
+
+    if (categoryFilter.value) {
+      url.searchParams.set('category', categoryFilter.value);
+    } else {
+      url.searchParams.delete('category');
+    }
+
+    if (nameFilter.value.trim()) {
+      url.searchParams.set('q', nameFilter.value.trim());
+    } else {
+      url.searchParams.delete('q');
     }
 
     window.location.href = url.toString();
