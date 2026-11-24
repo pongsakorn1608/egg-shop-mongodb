@@ -64,13 +64,46 @@ router.get('/cart', async (req, res) => {
   res.render('shop/cart', { items, total, error: null });
 });
 
-// 5. ลบสินค้าออกจากตะกร้า
+// 5. ปรับจำนวนสินค้าในตะกร้า
+router.post('/cart/update/:id', async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.sendStatus(404);
+  const product = await Product.findById(req.params.id);
+  if (!product || product.stock < 1) return res.status(404).send('ไม่พบเมนูนี้หรือสินค้าหมด');
+
+  const cart = req.session.cart || {};
+  const currentQty = Number(cart[product.id]) || 0;
+  let quantity;
+
+  if (req.body.change === 'increase') {
+    quantity = currentQty + 1;
+  } else if (req.body.change === 'decrease') {
+    quantity = currentQty - 1;
+  } else {
+    const quantityText = String(req.body.qty || '');
+    quantity = /^[1-9]\d*$/.test(quantityText) ? Number(quantityText) : NaN;
+  }
+
+  if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > product.stock) {
+    const { items, total } = await getCartData(cart);
+    return res.status(400).render('shop/cart', {
+      items,
+      total,
+      error: `กรุณาระบุจำนวนตั้งแต่ 1 ถึง ${product.stock} จาน`
+    });
+  }
+
+  cart[product.id] = quantity;
+  req.session.cart = cart;
+  res.redirect('/cart');
+});
+
+// 6. ลบสินค้าออกจากตะกร้า
 router.post('/cart/remove/:id', (req, res) => {
   if (req.session.cart) delete req.session.cart[req.params.id];
   res.redirect('/cart');
 });
 
-// 6. ยืนยันคำสั่งซื้อ -> ตัดสต็อกใน products และบันทึกเอกสารใหม่ลง orders
+// 7. ยืนยันคำสั่งซื้อ -> ตัดสต็อกใน products และบันทึกเอกสารใหม่ลง orders
 router.post('/checkout', async (req, res) => {
   const customerName = String(req.body.customerName || '').trim();
   const phone = String(req.body.phone || '').trim();
