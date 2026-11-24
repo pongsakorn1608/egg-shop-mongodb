@@ -27,23 +27,27 @@
 <script>
   const categoryFilter = document.getElementById('categoryFilter');
   const nameFilter = document.querySelector('input[name="q"]');
+  let searchTimeout;
 
-  categoryFilter.addEventListener('change', function () {
-    const url = new URL(window.location.href);
+  function applyFilters() {
+    const url = new URL('/', window.location.origin);
 
     if (categoryFilter.value) {
       url.searchParams.set('category', categoryFilter.value);
-    } else {
-      url.searchParams.delete('category');
     }
 
     if (nameFilter.value.trim()) {
       url.searchParams.set('q', nameFilter.value.trim());
-    } else {
-      url.searchParams.delete('q');
     }
 
     window.location.href = url.toString();
+  }
+
+  categoryFilter.addEventListener('change', applyFilters);
+
+  nameFilter.addEventListener('input', function () {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(applyFilters, 400);
   });
 </script>
 
