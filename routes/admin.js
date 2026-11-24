@@ -130,6 +130,72 @@ router.get('/orders', requireAdmin, async (req, res) => {
   res.render('admin/orders', { orders });
 });
 
+router.post('/orders/:id/delete', requireAdmin, async (req, res, next) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.sendStatus(404);
+  const order = await Order.findById(req.params.id);
+  if (!order) return res.status(404).send('ไม่พบคำสั่งซื้อนี้');
+
+  const quantitiesByProduct = new Map();
+  for (const item of order.items) {
+    const productId = String(item.product || '');
+    const quantity = Number(item.quantity);
+    if (mongoose.isValidObjectId(productId) && Number.isSafeInteger(quantity) && quantity > 0) {
+      quantitiesByProduct.set(productId, (quantitiesByProduct.get(productId) || 0) + quantity);
+    }
+  }
+
+  const restocked = [];
+  let deleteConflict = false;
+  try {
+    for (const [productId, quantity] of quantitiesByProduct) {
+      const result = await Product.updateOne(
+        { _id: productId },
+        { $inc: { stock: quantity } }
+      );
+      if (result.matchedCount) restocked.push({ productId, quantity });
+    }
+
+    const result = await Order.deleteOne({ _id: order._id, updatedAt: order.updatedAt });
+    deleteConflict = !result.deletedCount;
+  } catch (error) {
+    try {
+      for (const { productId, quantity } of restocked.reverse()) {
+        const result = await Product.updateOne(
+          { _id: productId },
+          { $inc: { stock: -quantity } }
+        );
+        if (!result.matchedCount) {
+          throw new Error(`ไม่สามารถย้อนการคืนสต็อกของเมนู ${productId} หลังลบคำสั่งซื้อไม่สำเร็จ`);
+        }
+      }
+    } catch (rollbackError) {
+      console.error('ย้อนการคืนสต็อกหลังลบคำสั่งซื้อไม่สำเร็จ:', rollbackError);
+      return next(rollbackError);
+    }
+    return next(error);
+  }
+
+  if (deleteConflict) {
+    try {
+      for (const { productId, quantity } of restocked.reverse()) {
+        const result = await Product.updateOne(
+          { _id: productId },
+          { $inc: { stock: -quantity } }
+        );
+        if (!result.matchedCount) {
+          throw new Error(`ไม่สามารถย้อนการคืนสต็อกของเมนู ${productId} หลังลบคำสั่งซื้อไม่สำเร็จ`);
+        }
+      }
+    } catch (rollbackError) {
+      console.error('ย้อนการคืนสต็อกหลังลบคำสั่งซื้อไม่สำเร็จ:', rollbackError);
+      return next(rollbackError);
+    }
+    return res.status(409).send('คำสั่งซื้อนี้ถูกแก้ไขจากหน้าจออื่น กรุณาตรวจสอบและลองใหม่');
+  }
+
+  res.redirect('/admin/orders');
+});
+
 router.get('/orders/:id/edit', requireAdmin, async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) return res.sendStatus(404);
   const order = await Order.findById(req.params.id);

@@ -19,7 +19,12 @@
     </ul>
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
       <strong class="text-danger">ยอดรวม: ฿<%= o.total.toLocaleString('th-TH') %></strong>
-      <a href="/admin/orders/<%= o._id %>/edit" class="btn btn-warning btn-sm">แก้ไขคำสั่งซื้อ</a>
+      <div class="d-flex gap-2">
+        <a href="/admin/orders/<%= o._id %>/edit" class="btn btn-warning btn-sm">แก้ไขคำสั่งซื้อ</a>
+        <form method="post" action="/admin/orders/<%= o._id %>/delete" onsubmit="return confirm('ยืนยันลบคำสั่งซื้อนี้? ระบบจะคืนจำนวนสินค้าเข้าสต๊อก');">
+          <button type="submit" class="btn btn-outline-danger btn-sm">ลบคำสั่งซื้อ</button>
+        </form>
+      </div>
     </div>
   </div>
 <% }) %>
